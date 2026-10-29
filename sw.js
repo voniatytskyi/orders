@@ -1,11 +1,12 @@
 /* Service worker: оболонка додатка працює офлайн, дані з таблиці в кеш не потрапляють
    (запити до Apps Script ідуть напряму в мережу). Оновлення файлів підтягуються у фоні
    і діють з наступного запуску. Змінили структуру файлів — піднімте номер у CACHE. */
-const CACHE = "orders-v1";
+const CACHE = "orders-v2";
 const SHELL = [
   "./",
   "index.html",
   "manifest.webmanifest",
+  "config.js",
   "icons/icon-192.png",
   "icons/icon-512.png",
   "icons/icon-maskable-512.png",
