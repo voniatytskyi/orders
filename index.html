@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>Облік замовлень</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<meta name="theme-color" content="#f2f4f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1716" media="(prefers-color-scheme: dark)">
+<style>
+@font-face{font-family:Onest;font-weight:100 900;font-style:normal;font-display:swap;src:url(fonts/onest-cyrillic-wght-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:Onest;font-weight:100 900;font-style:normal;font-display:swap;src:url(fonts/onest-latin-wght-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+:root{--bg:#f2f4f3;--card:#fff;--ink:#15211f;--mute:#5d6b68;--line:#dde3e1;--acc:#1f5a6b;--onacc:#fff;--ok:#2c7a4b;--warn:#a8691a;--bad:#b03a3a;--info:#1f5a6b;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0f1716;--card:#172321;--ink:#e8efed;--mute:#9aaaa6;--line:#26352f;--acc:#6fb7c9;--onacc:#0f1716;--ok:#6cc28e;--warn:#e0a85a;--bad:#e07a7a;--info:#6fb7c9}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;overscroll-behavior-y:contain}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.4 Onest,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:calc(150px + env(safe-area-inset-bottom,0px));overscroll-behavior-y:contain}
+main{max-width:560px;margin:0 auto;padding:0 14px}
+header{display:flex;align-items:flex-start;gap:8px;padding:calc(16px + env(safe-area-inset-top,0px)) 0 6px}
+header>div{flex:1;min-width:0}
+h1{margin:0;font-size:26px;font-weight:700;letter-spacing:-.01em}
+.sub{color:var(--mute);font-size:13.5px;margin-top:2px;min-height:19px}
+.ib{flex:none;width:44px;height:44px;border-radius:50%;border:1.5px solid var(--line);background:var(--card);color:var(--acc);display:grid;place-items:center;padding:0}
+.ib svg{width:22px;height:22px}
+#sync.spin svg{animation:rot 1s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){#sync.spin svg{animation:none}}
+.tot{display:flex;gap:8px;overflow-x:auto;margin:6px -14px 10px;padding:0 14px 2px;scrollbar-width:none}
+.tot::-webkit-scrollbar{display:none}
+.tot div{flex:none;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:7px 12px}
+.tot small{display:block;color:var(--mute);font-size:12px}.tot b{font-size:16px;font-variant-numeric:tabular-nums}
+#q{width:100%;margin:2px 0 12px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:inherit}
+.o{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.t{display:flex;justify-content:space-between;gap:10px;font-size:17px}
+.t b{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.t span{font-weight:500;white-space:nowrap}
+.m{display:flex;flex-wrap:wrap;gap:2px 12px;color:var(--mute);font-size:13.5px;margin:2px 0 8px}
+.m span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.s{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.st{border:1.5px solid currentColor;border-radius:99px;padding:3px 11px;font-size:13.5px;font-weight:500}
+.st.ok{color:var(--ok)}.st.bad{color:var(--bad)}.st.warn{color:var(--warn)}.st.info{color:var(--info)}.st.n{color:var(--mute);border-style:dashed}
+.ttn{color:var(--mute);font-size:13px;font-variant-numeric:tabular-nums}
+.c{display:flex;align-items:center;gap:10px}
+.chk{display:flex;align-items:center;gap:8px;font-size:14.5px;color:var(--mute);min-height:44px;margin:-6px 0}
+.chk input{width:22px;height:22px;accent-color:var(--acc)}
+.pf{margin-left:auto;font-weight:700}.pf small{font-weight:400;color:var(--mute);font-size:12.5px;margin-right:4px}
+.empty{text-align:center;color:var(--mute);padding:44px 10px}.empty b{color:var(--ink);font-size:18px}
+.err{background:var(--card);border:1px solid var(--bad);color:var(--bad);border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:14.5px}
+.note{background:var(--card);border:1px solid var(--warn);color:var(--warn);border-radius:12px;padding:9px 14px;margin:4px 0 10px;font-size:13.5px}
+h2{font-size:17px;margin:20px 0 6px}
+.bar{display:grid;grid-template-columns:112px 1fr 84px;gap:8px;align-items:center;margin:8px 0;font-size:14px}
+.bar i{display:block;height:14px;border-radius:4px;background:var(--acc)}.bar span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.pr{display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid var(--line);font-size:15px}
+.pr span:last-child{flex:none;max-width:42%;text-align:right;font-weight:500}
+.btn{width:100%;padding:13px;border-radius:12px;border:1.5px solid var(--acc);background:transparent;color:var(--acc);font:500 16px Onest,system-ui,sans-serif}
+.btn.p{background:var(--acc);color:var(--onacc)}.btn.d{border-color:var(--bad);color:var(--bad)}.btn:disabled{opacity:.55}
+.more{margin:4px 0 12px}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{flex:1;padding:15px 0;border:0;background:none;color:var(--mute);font:500 15px Onest,system-ui,sans-serif;border-top:3px solid transparent}
+nav button.on{color:var(--acc);border-top-color:var(--acc)}
+#fab{position:fixed;right:16px;bottom:calc(72px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border-radius:50%;border:0;background:var(--acc);color:var(--onacc);font-size:32px;line-height:1;box-shadow:0 4px 14px #0004}
+dialog{border:0;padding:18px 16px calc(22px + env(safe-area-inset-bottom,0px));width:100%;max-width:560px;margin:auto auto 0;border-radius:20px 20px 0 0;background:var(--card);color:var(--ink);max-height:94vh;max-height:94dvh;overflow:auto}
+dialog::backdrop{background:#0008}
+dialog h3{margin:0 0 12px;font-size:20px}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px}
+label.f{display:block;font-size:13px;color:var(--mute);margin-bottom:10px}.g label.f,.g3 label.f{margin:0}
+.f input,.f select{display:block;width:100%;min-width:0;margin-top:3px;padding:11px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:16px Onest,system-ui,sans-serif}
+.f input.bad{border-color:var(--bad)}
+input.sec{-webkit-text-security:disc;text-security:disc}
+.hint{font-size:12.5px;color:var(--bad);margin:-6px 0 10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 12px}
+.chips button{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:99px;padding:6px 12px;font:14px Onest,system-ui,sans-serif}
+.info{background:var(--bg);border-radius:10px;padding:9px 12px;font-size:14px;margin-bottom:12px;color:var(--mute)}
+.info b{color:var(--ink);font-weight:500}
+.acts{display:grid;gap:8px;margin-top:6px}
+.ver{margin-top:12px;font-size:12.5px;color:var(--mute);text-align:center}
+#toast{position:fixed;left:50%;bottom:calc(140px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:14px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90%;text-align:center;z-index:10}
+#toast.on{opacity:1}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div><h1 id="ttl">Активні</h1><div class="sub" id="sub"></div></div>
+<button class="ib" id="sync" aria-label="Оновити"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg></button>
+<button class="ib" id="cfgb" aria-label="Налаштування"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="12" cy="19" r="1.9"/></svg></button>
+</header>
+<div id="warn"></div>
+<div id="view"></div>
+</main>
+<button id="fab" aria-label="Нове замовлення">+</button>
+<nav><button data-tab="act">Активні</button><button data-tab="arc">Архів</button><button data-tab="rep">Звіт</button><button data-tab="prc">Ціни</button></nav>
+<div id="toast" role="status"></div>
+
+<dialog id="dlg">
+<h3 id="dt">Нове замовлення</h3>
+<div class="g">
+<label class="f">Дата<input id="f-date" type="date"></label>
+<label class="f">Оплата<select id="f-pay"></select></label>
+</div>
+<label class="f">Клієнт<input id="f-client" type="text" placeholder="Прізвище клієнта" autocomplete="off"></label>
+<label class="f">Посилання або джерело<input id="f-src" type="text" placeholder="Джерело трафіку" autocomplete="off"></label>
+<div class="chips" id="srcs"></div>
+<div class="g3">
+<label class="f">Сума<input id="f-sum" type="text" inputmode="decimal"></label>
+<label class="f">Реклама<input id="f-ad" type="text" inputmode="decimal"></label>
+<label class="f">Прибуток<input id="f-profit" type="text" inputmode="decimal"></label>
+</div>
+<label class="f">Номер ТТН<input id="f-ttn" type="text" inputmode="numeric" placeholder="Можна додати пізніше" autocomplete="off"></label>
+<div class="hint" id="ttn-hint" hidden>ТТН Нової пошти має 14 цифр.</div>
+<div class="info" id="stinfo" hidden></div>
+<div class="acts">
+<button class="btn p" id="b-save">Зберегти</button>
+<button class="btn d" id="b-del" hidden>Видалити</button>
+<button class="btn" id="b-cancel">Скасувати</button>
+</div>
+</dialog>
+
+<dialog id="cdlg">
+<h3>Підключення до таблиці</h3>
+<label class="f">Адреса API (Apps Script, закінчується на /exec)<input id="c-url" type="url" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec"></label>
+<label class="f">Токен<input id="c-tok" class="sec" type="text" autocapitalize="off" autocomplete="off" spellcheck="false"></label>
+<div class="info" id="c-msg" hidden></div>
+<div class="acts">
+<button class="btn p" id="c-save">Зберегти й перевірити</button>
+<button class="btn" id="c-install" hidden>Встановити додаток</button>
+<button class="btn d" id="c-reset" hidden>Вийти й стерти налаштування</button>
+<button class="btn" id="c-close">Закрити</button>
+</div>
+<div class="ver" id="c-ver"></div>
+</dialog>
+
+<script>
+const APP_VER='1.0';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nf=new Intl.NumberFormat('uk-UA',{maximumFractionDigits:2});
+const money=n=>nf.format(Math.round((n||0)*100)/100)+' грн';
+const dmy=s=>s?s.split('-').reverse().join('.'):'';
+const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+const hhmm=()=>new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});
+const num=v=>parseFloat(String(v).replace(',','.').replace(/\s/g,''))||0;
+const LS={
+  get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}},
+  del(k){try{localStorage.removeItem(k)}catch(e){}}
+};
+const validUrl=u=>/^https:\/\/script\.google\.com\/[\w\-./]+\/exec$/.test(u);
+const PAY_DEFAULT=['Післяплата','Пром оплата','Повна','Часткова (100грн)','Часткова (200грн)','Часткова (300грн)'];
+
+/* ---------- налаштування підключення ---------- */
+let cfg=LS.get('cfg');
+if(!(cfg&&cfg.u&&cfg.t))cfg=null;
+(function applySetupLink(){
+  const m=location.hash.match(/^#u=([^&]+)&t=(.+)$/);
+  if(!m)return;
+  let u='',t='';
+  try{u=decodeURIComponent(m[1]);t=decodeURIComponent(m[2])}catch(e){}
+  if(validUrl(u)&&t.length>=16){cfg={u:u,t:t};LS.set('cfg',cfg);LS.del('cache')}
+  history.replaceState(null,'',location.pathname+location.search);
+})();
+
+/* ---------- стан і кеш ---------- */
+const S={act:[],totals:[],pays:[],srcs:[],arc:null,arcTotals:[],prices:null,rep:null,at:''};
+let hasCache=false;
+(function restore(){
+  const c=cfg&&LS.get('cache');if(!c)return;
+  ['act','totals','pays','srcs','arcTotals'].forEach(k=>{if(Array.isArray(c[k]))S[k]=c[k]});
+  ['arc','prices'].forEach(k=>{if(Array.isArray(c[k]))S[k]=c[k]});
+  if(c.rep&&Array.isArray(c.rep.months))S.rep=c.rep;
+  S.at=c.at||'';hasCache=!!(c.pays&&c.pays.length);
+})();
+function persist(){if(cfg)LS.set('cache',{act:S.act,totals:S.totals,pays:S.pays,srcs:S.srcs,arc:S.arc,arcTotals:S.arcTotals,prices:S.prices,rep:S.rep,at:S.at})}
+function resetState(){Object.assign(S,{act:[],totals:[],pays:[],srcs:[],arc:null,arcTotals:[],prices:null,rep:null,at:''});hasCache=false}
+function setState(s){if(s.active)S.act=s.active;if(s.totals)S.totals=s.totals;if(s.pays&&s.pays.length)S.pays=s.pays;if(s.srcs)S.srcs=s.srcs}
+
+let tab='act',q='',edit=null,delArm=false,saving=false,busy=0,syncing=false,stale=false,lastLoad=0,loadingMain=false,arcShown=60,loadErr='',newCid='',ready=hasCache,pendingNew=false;
+
+/* ---------- зв'язок із Apps Script ---------- */
+const E=(m,c)=>{const e=new Error(m);e.code=c;return e};
+async function rpc(fn,args,timeout){
+  if(!cfg)throw E('Додаток не налаштовано','cfg');
+  const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),timeout||90000);
+  let res;
+  try{
+    res=await fetch(cfg.u,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({token:cfg.t,fn:fn,args:args||[]}),signal:ctl.signal,redirect:'follow'});
+  }catch(e){
+    throw E(e&&e.name==='AbortError'?'Сервер не відповів вчасно. Спробуйте ще раз.':'Немає зв’язку із сервером. Перевірте інтернет, а якщо він є — адресу API та доступ «Усі» в розгортанні.','net');
+  }finally{clearTimeout(tm)}
+  let j;
+  try{j=await res.json()}catch(e){throw E('Сервер повернув не JSON. У розгортанні Apps Script має бути доступ «Усі».','bad')}
+  stale=false;
+  if(!j||!j.ok)throw E((j&&j.error)||'Помилка сервера',(j&&j.code)||'server');
+  return j.data;
+}
+function spin(d){busy=Math.max(0,busy+d);$('#sync').classList.toggle('spin',busy>0)}
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),3400)}
+function fail(e,what){
+  const m=(e&&e.message)||String(e);
+  if(e&&e.code==='net'){stale=true;toast(m);return}
+  if(e&&(e.code==='auth'||e.code==='no_token'||e.code==='cfg')){toast(m);openCfg(m);return}
+  toast((what?what+': ':'')+m);
+  if(/Таблиця змінилась/.test(m))reloadAll();
+}
+
+/* ---------- відображення ---------- */
+function stCls(s){const t=(s||'').toLowerCase();if(!t)return'n';if(/відмов|повернен/.test(t))return'bad';if(/отриман|видан|доставлен/.test(t))return'ok';if(/прибув|відділен|очіку/.test(t))return'warn';return'info'}
+const byRow=(list,row)=>(list||[]).find(o=>o.row===row);
+function card(o,arc){
+  const st=o.ttn?(o.status||'Статус ще не отримано'):'ТТН не додано';
+  const cls=o.ttn?stCls(o.status):'n';
+  const ctl=arc?'':`<label class="chk"><input type="checkbox" data-row="${o.row}"${o.done?' checked':''}>Розраховано</label>`;
+  return `<article class="o" data-row="${o.row}"><div class="t"><b>${esc(o.client||'Без імені')}</b><span>${money(o.sum)}</span></div>
+  <div class="m"><span>${dmy(o.date)}</span><span>${esc(o.pay)}</span>${o.src?`<span>${esc(/^https?:/i.test(o.src)?'Prom':o.src)}</span>`:''}</div>
+  <div class="s"><span class="st ${cls}">${esc(st)}</span>${o.ttn?`<span class="ttn">${esc(o.ttn)}</span>`:''}${o.cost?`<span class="ttn">доставка ${money(o.cost)}</span>`:''}</div>
+  <div class="c">${ctl}<span class="pf"><small>прибуток</small>${money(o.profit)}</span></div></article>`;
+}
+const totals=t=>t&&t.length?`<div class="tot">${t.map(p=>`<div><small>${esc(p[0])}</small><b>${esc(p[1])}</b></div>`).join('')}</div>`:'';
+const match=o=>!q||((o.client||'')+' '+(o.ttn||'')+' '+(o.src||'')+' '+(o.pay||'')).toLowerCase().includes(q);
+const byDate=(a,b)=>(b.date||'').localeCompare(a.date||'')||b.row-a.row;
+
+function renderList(arc){
+  const all=arc?(S.arc||[]):S.act,list=all.filter(match).sort(byDate);
+  let h=totals(arc?S.arcTotals:S.totals)+`<input id="q" type="search" placeholder="Пошук: клієнт або ТТН" value="${esc(q)}">`;
+  if(loadErr)h+=`<div class="err">${esc(loadErr)}</div>`;
+  if(!ready||(arc&&S.arc===null)){if(!loadErr)h+='<div class="empty">Завантаження…</div>'}
+  else if(!list.length)h+=`<div class="empty">${q?'Нічого не знайдено.':arc?'Архів порожній.':'Немає активних замовлень. Натисніть «+», щоб додати.'}</div>`;
+  else{
+    const shown=arc?list.slice(0,arcShown):list;
+    h+=shown.map(o=>card(o,arc)).join('');
+    if(arc&&list.length>shown.length)h+=`<button class="btn more" id="more">Показати ще (${list.length-shown.length})</button>`;
+  }
+  $('#sub').textContent=arc?(S.arc?S.arc.length+' замовлень в архіві':''):(ready?S.act.length+' у роботі'+(S.at?', оновлено о '+S.at:''):'');
+  return h;
+}
+function renderRep(){
+  const r=S.rep;
+  if(!r)return loadErr?`<div class="err">${esc(loadErr)}</div>`:'<div class="empty">Рахую звіт…</div>';
+  $('#sub').textContent='Дані з аркуша «Прибуток по місяцях»';
+  if(!r.months.length)return '<div class="empty">Звіт з’явиться, коли в архіві будуть замовлення.</div>';
+  const ms=r.months.slice(-12),mx=Math.max(...ms.map(x=>Math.abs(x.p)),1),tot=r.ok+r.bad,pct=tot?Math.round(r.ok/tot*1000)/10:0;
+  return `<h2>Прибуток по місяцях</h2>${ms.map(x=>`<div class="bar"><span>${esc(x.m)}</span><span><i style="width:${Math.max(2,Math.abs(x.p)/mx*100)}%"></i></span><span>${money(x.p)}</span></div>`).join('')}
+  <h2>Успішні та відмови</h2><div class="tot" style="flex-wrap:wrap;overflow:visible"><div><small>Отримано</small><b>${nf.format(r.ok)}</b></div><div><small>Відмови</small><b>${nf.format(r.bad)}</b></div><div><small>Успішних</small><b>${String(pct).replace('.',',')}%</b></div></div>`;
+}
+function renderPrices(){
+  if(!S.prices)return loadErr?`<div class="err">${esc(loadErr)}</div>`:'<div class="empty">Завантаження…</div>';
+  $('#sub').textContent='Вхідні ціни';
+  const l=S.prices.filter(p=>!q||p.n.toLowerCase().includes(q));
+  return `<input id="q" type="search" placeholder="Пошук позиції" value="${esc(q)}">`+(l.length?l.map(p=>`<div class="pr"><span>${esc(p.n)}</span><span>${esc(p.p)}</span></div>`).join(''):'<div class="empty">Нічого не знайдено.</div>');
+}
+function render(keepFocus){
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
+  $('#ttl').textContent={act:'Активні',arc:'Архів',rep:'Звіт',prc:'Ціни'}[tab];
+  $('#fab').hidden=tab!=='act'||!cfg;
+  $('#warn').innerHTML=cfg&&stale?`<div class="note">Немає зв’язку із сервером. Показано збережені дані${S.at?' (оновлено о '+esc(S.at)+')':''}.</div>`:'';
+  if(!cfg){
+    $('#sub').textContent='';
+    $('#view').innerHTML='<div class="empty"><b>Підключіть таблицю</b><br>Відкрийте посилання налаштування або введіть адресу й токен вручну.<br><br><button class="btn p" id="go-cfg">Налаштувати</button></div>';
+    return;
+  }
+  $('#view').innerHTML=tab==='act'?renderList(false):tab==='arc'?renderList(true):tab==='rep'?renderRep():renderPrices();
+  if(keepFocus){const i=$('#q');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}}
+}
+
+/* ---------- завантаження даних ---------- */
+async function loadMain(){
+  if(loadingMain||!cfg)return;
+  loadingMain=true;spin(1);
+  try{setState(await rpc('apiLoad'));S.at=hhmm();loadErr='';persist()}
+  catch(e){if(!hasCache&&!S.pays.length)loadErr='Не вдалося завантажити дані: '+e.message;fail(e)}
+  ready=true;lastLoad=Date.now();loadingMain=false;spin(-1);render();
+}
+async function loadArc(){
+  spin(1);
+  try{const a=await rpc('apiArchive');S.arc=a.rows;S.arcTotals=a.totals;loadErr='';persist()}
+  catch(e){if(S.arc===null)loadErr='Не вдалося завантажити архів: '+e.message;fail(e)}
+  spin(-1);render();
+}
+async function loadRep(){
+  spin(1);
+  try{S.rep=await rpc('apiReport',[true],120000);loadErr='';persist()}
+  catch(e){if(!S.rep)loadErr='Не вдалося порахувати звіт: '+e.message;fail(e)}
+  spin(-1);render();
+}
+async function loadPrices(){
+  spin(1);
+  try{S.prices=await rpc('apiPrices');loadErr='';persist()}
+  catch(e){if(!S.prices)loadErr='Не вдалося завантажити ціни: '+e.message;fail(e)}
+  spin(-1);render();
+}
+async function refreshTTN(manual){
+  if(syncing||!cfg)return;
+  syncing=true;spin(1);
+  try{
+    const s=await rpc('apiRefreshStatuses',[],120000);
+    setState(s);LS.set('ttnAt',Date.now());S.at=hhmm();persist();
+    if(manual&&s.msg)toast(s.msg.replace(/\n/g,', '));
+  }catch(e){if(manual||e.code!=='net')fail(e,'Нова пошта');else stale=true}
+  syncing=false;spin(-1);render();
+}
+function maybeRefreshTTN(){if(Date.now()-(LS.get('ttnAt')||0)>120000)refreshTTN(false)}
+function reloadAll(){loadMain();if(tab==='arc')loadArc()}
+
+/* ---------- вкладки та кнопка «Назад» ---------- */
+function showTab(t,fromPop){
+  if(t===tab)return;
+  tab=t;q='';arcShown=60;loadErr='';render();scrollTo(0,0);
+  if(!fromPop)history.pushState({tab:t},'');
+  if(!cfg)return;
+  if(t==='arc')loadArc();
+  if(t==='rep')loadRep();
+  if(t==='prc')loadPrices();
+}
+let dlgPushed=false;
+function modal(d){d.showModal();history.pushState({dlg:1},'');dlgPushed=true}
+function onDlgClose(){if(dlgPushed){dlgPushed=false;if(history.state&&history.state.dlg)history.back()}}
+$('#dlg').addEventListener('close',onDlgClose);
+$('#cdlg').addEventListener('close',onDlgClose);
+window.addEventListener('popstate',e=>{
+  const open=document.querySelector('dialog[open]');
+  if(open){dlgPushed=false;open.close();return}
+  const t=(e.state&&e.state.tab)||'act';
+  if(t!==tab)showTab(t,true);
+});
+
+/* ---------- форма замовлення ---------- */
+function openEdit(key,row){
+  edit=row?{key:key,o:byRow(key==='arc'?S.arc:S.act,row)}:null;
+  if(row&&!edit.o)return;
+  delArm=false;const o=edit?edit.o:{};
+  newCid=Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+  $('#dt').textContent=edit?'Замовлення':'Нове замовлення';
+  let pays=S.pays.length?S.pays.slice():PAY_DEFAULT.slice();
+  if(o.pay&&!pays.includes(o.pay))pays.push(o.pay);
+  $('#f-pay').innerHTML=pays.map(p=>`<option>${esc(p)}</option>`).join('');
+  $('#f-date').value=o.date||today();$('#f-pay').value=o.pay||pays[0]||'';
+  $('#f-client').value=o.client||'';$('#f-src').value=o.src||'';
+  $('#f-sum').value=o.sum||'';$('#f-ad').value=o.ad||'';$('#f-profit').value=o.profit||'';$('#f-ttn').value=o.ttn||'';
+  $('#f-ttn').classList.remove('bad');$('#ttn-hint').hidden=true;
+  $('#srcs').innerHTML=S.srcs.map(s=>`<button type="button" data-src="${esc(s)}">${esc(s)}</button>`).join('');
+  const info=$('#stinfo');
+  if(edit&&o.ttn){info.hidden=false;info.innerHTML=`Статус Нової пошти: <b>${esc(o.status||'ще не отримано')}</b>`+(o.cost?`<br>Вартість доставки при відмові: <b>${money(o.cost)}</b>`:'')}
+  else if(edit){info.hidden=false;info.textContent='Додайте номер ТТН. Статус підтягнеться з Нової пошти автоматично.'}
+  else info.hidden=true;
+  $('#b-del').hidden=!edit;$('#b-del').textContent='Видалити';$('#b-save').disabled=false;$('#b-save').textContent='Зберегти';
+  modal($('#dlg'));
+}
+function readForm(){
+  const v=i=>$('#f-'+i).value;
+  const ttn=v('ttn').replace(/\s/g,'');
+  if(ttn&&!/^\d{14}$/.test(ttn)){$('#f-ttn').classList.add('bad');$('#ttn-hint').hidden=false;$('#f-ttn').focus();return null}
+  if(!num(v('sum'))&&!v('client').trim()){toast('Вкажіть клієнта або суму');return null}
+  return{date:v('date')||today(),pay:v('pay'),client:v('client').trim(),src:v('src').trim(),sum:num(v('sum')),ad:num(v('ad')),profit:num(v('profit')),ttn:ttn};
+}
+async function saveForm(){
+  if(saving)return;
+  const d=readForm();if(!d)return;
+  saving=true;$('#b-save').disabled=true;$('#b-save').textContent='Збереження…';
+  const ttnChanged=d.ttn&&(!edit||edit.o.ttn!==d.ttn);
+  try{
+    let s;
+    if(edit)s=await rpc('apiUpdate',[edit.key,edit.o.row,edit.o.fp,d]);
+    else{d.cid=newCid;s=await rpc('apiAdd',[d])}
+    setState(s);S.at=hhmm();persist();
+    $('#dlg').close();
+    if(edit&&edit.key==='arc')await loadArc();else render();
+    toast('Збережено');
+    if(ttnChanged)refreshTTN(false);
+  }catch(e){
+    $('#b-save').disabled=false;$('#b-save').textContent='Зберегти';
+    if(/Таблиця змінилась/.test(e.message)){$('#dlg').close();toast(e.message);reloadAll()}
+    else{toast(e.message);if(e.code==='net')stale=true}      // форма лишається відкритою — нічого не втрачається
+  }
+  saving=false;
+}
+async function removeOrder(){
+  if(!delArm){delArm=true;$('#b-del').textContent='Натисніть ще раз, щоб видалити';return}
+  const k=edit.key;
+  try{
+    setState(await rpc('apiDelete',[k,edit.o.row,edit.o.fp]));persist();
+    $('#dlg').close();
+    if(k==='arc')await loadArc();else render();
+    toast('Видалено');
+  }catch(e){
+    delArm=false;$('#b-del').textContent='Видалити';
+    if(/Таблиця змінилась/.test(e.message)){$('#dlg').close();toast(e.message);reloadAll()}else toast(e.message);
+  }
+}
+
+/* ---------- налаштування ---------- */
+let deferredInstall=null;
+const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;$('#c-install').hidden=false});
+window.addEventListener('appinstalled',()=>{deferredInstall=null;$('#c-install').hidden=true;toast('Додаток встановлено')});
+function cfgMsg(t){const m=$('#c-msg');m.hidden=!t;m.textContent=t||''}
+function openCfg(msg){
+  if(document.querySelector('dialog[open]'))return;
+  $('#c-url').value=cfg?cfg.u:'';$('#c-tok').value=cfg?cfg.t:'';cfgMsg(msg);
+  $('#c-reset').hidden=!cfg;$('#c-reset').textContent='Вийти й стерти налаштування';
+  $('#c-install').hidden=!deferredInstall;
+  $('#c-ver').textContent='Версія '+APP_VER+(standalone?' · встановлено як додаток':'');
+  modal($('#cdlg'));
+}
+$('#c-save').onclick=async()=>{
+  const u=$('#c-url').value.trim(),t=$('#c-tok').value.trim();
+  if(!validUrl(u)){cfgMsg('Адреса має бути такого вигляду: https://script.google.com/macros/s/…/exec');return}
+  if(t.length<16){cfgMsg('Токен занадто короткий');return}
+  const old=cfg;cfg={u:u,t:t};cfgMsg('Перевіряю підключення…');$('#c-save').disabled=true;
+  try{
+    await rpc('apiPing',[],25000);
+    const changed=!old||old.u!==u||old.t!==t;
+    LS.set('cfg',cfg);
+    if(changed){LS.del('cache');resetState();ready=false}
+    $('#cdlg').close();toast('Підключено');
+    render();loadMain().then(maybeRefreshTTN);
+  }catch(e){cfg=old;cfgMsg(e.message)}
+  $('#c-save').disabled=false;
+};
+$('#c-reset').onclick=()=>{
+  if($('#c-reset').textContent!=='Натисніть ще раз'){$('#c-reset').textContent='Натисніть ще раз';return}
+  LS.del('cfg');LS.del('cache');LS.del('ttnAt');cfg=null;resetState();ready=false;stale=false;
+  $('#cdlg').close();render();
+};
+$('#c-close').onclick=()=>$('#cdlg').close();
+$('#c-install').onclick=async()=>{
+  if(!deferredInstall)return;
+  deferredInstall.prompt();try{await deferredInstall.userChoice}catch(e){}
+  deferredInstall=null;$('#c-install').hidden=true;
+};
+
+/* ---------- події ---------- */
+$('#b-cancel').onclick=()=>$('#dlg').close();
+$('#b-save').onclick=saveForm;$('#b-del').onclick=removeOrder;
+$('#fab').onclick=()=>openEdit();
+$('#cfgb').onclick=()=>openCfg();
+$('#srcs').onclick=e=>{const b=e.target.closest('button');if(b)$('#f-src').value=b.dataset.src};
+$('#f-ttn').oninput=e=>{e.target.classList.remove('bad');$('#ttn-hint').hidden=true};
+$('#sync').onclick=()=>{
+  if(!cfg){openCfg();return}
+  if(tab==='act'){loadMain();refreshTTN(true)}
+  else if(tab==='arc')loadArc();else if(tab==='rep')loadRep();else loadPrices();
+};
+document.querySelector('nav').onclick=e=>{const b=e.target.closest('button');if(b)showTab(b.dataset.tab)};
+$('#view').addEventListener('input',e=>{if(e.target.id==='q'){q=e.target.value.trim().toLowerCase();arcShown=60;render(true)}});
+$('#view').addEventListener('click',e=>{
+  if(e.target.id==='go-cfg'){openCfg();return}
+  if(e.target.id==='more'){arcShown+=60;render();return}
+  if(e.target.closest('label,input,button'))return;
+  const c=e.target.closest('.o');if(c)openEdit(tab==='arc'?'arc':'act',+c.dataset.row);
+});
+$('#view').addEventListener('change',async e=>{
+  const t=e.target;if(t.type!=='checkbox')return;
+  const o=byRow(S.act,+t.dataset.row);if(!o)return;
+  t.disabled=true;
+  try{
+    const s=await rpc('apiSetDone',['act',o.row,o.fp,t.checked]);
+    setState(s);S.at=hhmm();persist();
+    if(s.archived)toast('Перенесено в архів');
+    render();
+  }catch(err){render();fail(err)}
+});
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&cfg&&Date.now()-lastLoad>60000){loadMain();if(tab==='arc')loadArc()}
+});
+addEventListener('online',()=>{if(cfg)reloadAll()});
+
+/* ---------- запуск ---------- */
+history.replaceState({tab:'act'},'');
+pendingNew=/[?&]new=1(&|$)/.test(location.search)&&!!cfg;
+if(/[?&]new=1(&|$)/.test(location.search))history.replaceState({tab:'act'},'',location.pathname);
+render();
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+if(cfg){
+  if(pendingNew&&hasCache){pendingNew=false;openEdit()}
+  loadMain().then(()=>{if(pendingNew){pendingNew=false;openEdit()}maybeRefreshTTN()});
+}
+</script>
+</body>
+</html>
